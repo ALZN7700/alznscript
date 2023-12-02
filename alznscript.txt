@@ -1,0 +1,105 @@
+-- código original omitido por questão de espaço
+
+local function DrawEsp(Plr)
+    local Box = Drawing.new("Square");
+    local Name = Drawing.new("Text");
+    local Distance = Drawing.new("Text");
+    local Health = Drawing.new("Text");
+    local Tracer = Drawing.new("Line");
+    local ALZN = Drawing.new("Text"); -- novo objeto de texto para ALZN
+
+    Box.Visible = false;
+    Name.Visible = false;
+    Distance.Visible = false;
+    Health.Visible = false;
+    Tracer.Visible = false;
+    ALZN.Visible = false; -- inicialmente invisível
+
+    Box.Color = Settings.Esp.Color;
+    Box.Thickness = Settings.Esp.Thickness;
+    Box.Transparency = Settings.Esp.Transparency;
+    Box.Filled = false;
+
+    Name.Color = Settings.Esp.Color;
+    Name.Size = Settings.Esp.Size;
+    Name.Center = true;
+    Name.Outline = true;
+    Name.Font = 1;
+
+    Distance.Color = Settings.Esp.Color;
+    Distance.Size = Settings.Esp.Size;
+    Distance.Center = true;
+    Distance.Outline = true;
+    Distance.Font = 1;
+
+    Health.Color = Settings.Esp.Color;
+    Health.Size = Settings.Esp.Size;
+    Health.Center = true;
+    Health.Outline = true;
+    Health.Font = 1;
+
+    Tracer.Color = Settings.Esp.Color;
+    Tracer.Thickness = Settings.Esp.TracerThickness;
+    Tracer.Transparency = Settings.Esp.TracerTrancparency;
+
+    ALZN.Color = Color3.fromRGB(0, 255, 255); -- cor ciano para ALZN
+    ALZN.Size = Settings.Esp.Size;
+    ALZN.Center = true;
+    ALZN.Outline = true;
+    ALZN.Font = 1;
+    ALZN.Text = "ALZN"; -- texto ALZN
+
+    local function Update()
+        local Connection;
+        Connection = RunService.RenderStepped:Connect(function()
+            if (not Plr or not Plr.Character or not Plr.Character:FindFirstChild("Humanoid") or not Plr.Character:FindFirstChild("HumanoidRootPart") or not Plr.Character.Humanoid.Health > 0 or not Plr.Character.PrimaryPart or not Settings.Esp.Enabled) then
+                Box.Visible = false;
+                Name.Visible = false;
+                Distance.Visible = false;
+                Health.Visible = false;
+                Tracer.Visible = false;
+                ALZN.Visible = false; -- tornar invisível quando as condições não forem atendidas
+                Connection:Disconnect();
+                return;
+            end
+
+            local PartPos, OnScreen = WorldToViewportPoint(CurrentCamera, Plr.Character.PrimaryPart.Position);
+
+            if (OnScreen) then
+                local Distance = (CurrentCamera.CFrame.Position - Plr.Character.PrimaryPart.Position).Magnitude;
+                local Size = 2000 / Distance;
+
+                Box.Size = Vector2new(5 * Size, 12 * Size);
+                Box.Position = Vector2new(PartPos.X - Box.Size.X / 2, PartPos.Y - Box.Size.Y / 2);
+                Box.Visible = Settings.Esp.BoxEsp;
+
+                Name.Text = Settings.Esp.DisplayNamesEnabled and Plr.DisplayName or Plr.Name;
+                Name.Position = Vector2new(PartPos.X, (PartPos.Y + Box.Size.Y / 2) - (Name.TextBounds.Y / 2));
+                Name.Visible = Settings.Esp.NamesEnabled;
+
+                Distance.Text = format("%d", Distance) .. "M";
+                Distance.Position = Vector2new(PartPos.X, (PartPos.Y - Box.Size.Y / 2) - (Distance.TextBounds.Y / 2));
+                Distance.Visible = Settings.Esp.DistanceEnabled;
+
+                Health.Text = format("%d", Plr.Character.Humanoid.Health) .. "HP";
+                Health.Position = Vector2new(PartPos.X, PartPos.Y - (Health.TextBounds.Y / 2));
+                Health.Visible = Settings.Esp.HealthEnabled;
+
+                Tracer.From = Vector2new(CurrentCamera.ViewportSize.X / 2, CurrentCamera.ViewportSize.Y / 2);
+                Tracer.To = Vector2new(PartPos.X, PartPos.Y - (Settings.Esp.TracerTo == "Head" and Box.Size.Y / 2 or 0));
+                Tracer.Visible = Settings.Esp.TracersEnabled;
+
+                ALZN.Position = Vector2new(PartPos.X, (PartPos.Y + Box.Size.Y / 2) + (ALZN.TextBounds.Y / 2)); -- posição acima do nome
+                ALZN.Visible = true; -- tornar visível quando na tela
+            else
+                Box.Visible = false;
+                Name.Visible = false;
+                Distance.Visible = false;
+                Health.Visible = false;
+                Tracer.Visible = false;
+                ALZN.Visible = false; -- tornar invisível quando fora da tela
+            end
+        end)
+    end
+    coroutine.wrap(Update)();
+end
